@@ -9,8 +9,12 @@
 
 const express = require('express');
 const { mongo } = require('../../../utils/mongo');
+const salesByTimePeriodRouter = require('./time-period');
 
 const router = express.Router();
+
+// This is the sales-by-time-period route
+router.use('/time-period', salesByTimePeriodRouter);
 
 /**
  * @description
