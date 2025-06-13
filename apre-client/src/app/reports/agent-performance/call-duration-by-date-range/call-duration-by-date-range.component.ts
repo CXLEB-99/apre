@@ -1,3 +1,4 @@
+// call-duration-by-date-range.component.ts
 import { Component } from '@angular/core';
 import { CalendarComponent } from '../../../shared/calendar/calendar.component';
 import { CommonModule, DatePipe } from '@angular/common';
@@ -20,7 +21,8 @@ import { environment } from '../../../../environments/environment';
             <app-calendar (dateSelected)="onStartDateSelected($event)"></app-calendar>
           </div>
           <div class="calendar-form__item">
-            <label class="calendar-form__label" for="endDate">End Date:</label>
+            <label class="calendar-form__label" for="endDate">
+              End Date:<span style="color: red;"> *</span></label>
             <app-calendar (dateSelected)="onEndDateSelected($event)"></app-calendar>
           </div>
         </div>

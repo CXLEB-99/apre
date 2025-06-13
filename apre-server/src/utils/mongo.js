@@ -32,7 +32,7 @@ const mongo = async(operations, next) => {
     console.log('Closing connection to MongoDB Atlas...')
   } catch (err) {
     // Catch any errors and throw an error 500 status
-    const error = new Error('Error connecting to db ' + err) // NOTE: updated this during sprint 4
+    const error = new Error('Error connecting to db ' + err)
     error.status = 500
 
     // Log out the error
