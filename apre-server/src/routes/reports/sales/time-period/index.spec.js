@@ -1,6 +1,6 @@
+// sales by time period index.spec.js
 const request = require('supertest');
-const app = require('../../../../../app');
-
+const app = require('../../../../app');
 describe('GET /api/reports/sales/time-period', () => {
   it('should return 400 if startDate or endDate is missing', async () => {
     const res = await request(app).get('/api/reports/sales/time-period');

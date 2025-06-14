@@ -1,3 +1,4 @@
+//sales-by-time-period.component.spec.ts
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SalesByTimePeriodComponent } from './sales-by-time-period.component';
 import { HttpClientTestingModule } from '@angular/common/http/testing';

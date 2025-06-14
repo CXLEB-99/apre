@@ -10,6 +10,8 @@
 const express = require('express');
 const { mongo } = require('../../../utils/mongo');
 const createError = require('http-errors');
+const agentPerformanceBySupervisorRouter = require('./by-supervisor');
+
 
 const router = express.Router();
 
@@ -32,6 +34,8 @@ router.get('/call-duration-by-date-range', (req, res, next) => {
     if (!startDate || !endDate) {
       return next(createError(400, 'Start date and end date are required'));
     }
+
+    router.use('/by-supervisor', agentPerformanceBySupervisorRouter);
 
     console.log('Fetching call duration report for date range:', startDate, endDate);
 

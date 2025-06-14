@@ -1,7 +1,7 @@
+//sales by time period index.js
 const express = require('express');
 const router = express.Router();
-const mongo = require('../../../../utils/mongo');
-
+const { mongo } = require('../../../../utils/mongo');
 router.get('/', (req, res, next) => {
   try {
     const { startDate, endDate } = req.query;
