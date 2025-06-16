@@ -12,81 +12,43 @@ const { mongo } = require('../../../utils/mongo');
 const createError = require('http-errors');
 const agentPerformanceBySupervisorRouter = require('./by-supervisor');
 
-
 const router = express.Router();
 
+// ────────────────────────────────────────────────────────────────────────────────
+// MOUNT the by-supervisor sub-router here, *not* inside any GET handler.
+// This makes these endpoints available immediately on startup.
+// ────────────────────────────────────────────────────────────────────────────────
+router.use(
+  '/by-supervisor',
+  agentPerformanceBySupervisorRouter
+);
+
 /**
- * @description
- *
- * GET /call-duration-by-date-range
- *
- * Fetches call duration data for agents within a specified date range.
- *
- * Example:
- * fetch('/call-duration-by-date-range?startDate=2023-01-01&endDate=2023-01-31')
- *  .then(response => response.json())
- *  .then(data => console.log(data));
+ * GET /api/reports/agent-performance/call-duration-by-date-range
+ * Fetch agents’ call durations over a date range.
  */
 router.get('/call-duration-by-date-range', (req, res, next) => {
   try {
     const { startDate, endDate } = req.query;
-
     if (!startDate || !endDate) {
       return next(createError(400, 'Start date and end date are required'));
     }
 
-    router.use('/by-supervisor', agentPerformanceBySupervisorRouter);
-
-    console.log('Fetching call duration report for date range:', startDate, endDate);
-
     mongo(async db => {
       const data = await db.collection('agentPerformance').aggregate([
-        {
-          $match: {
-            date: {
-              $gte: new Date(startDate),
-              $lte: new Date(endDate)
-            }
-          }
-        },
-        {
-          $lookup: {
+        { $match: { date: { $gte: new Date(startDate), $lte: new Date(endDate) } } },
+        { $lookup: {
             from: 'agents',
             localField: 'agentId',
             foreignField: 'agentId',
             as: 'agentDetails'
           }
         },
-        {
-          $unwind: '$agentDetails'
-        },
-        {
-          $group: {
-            _id: '$agentDetails.name',
-            totalCallDuration: { $sum: '$callDuration' }
-          }
-        },
-        {
-          $project: {
-            _id: 0,
-            agent: '$_id',
-            callDuration: '$totalCallDuration'
-          }
-        },
-        {
-          $group: {
-            _id: null,
-            agents: { $push: '$agent' },
-            callDurations: { $push: '$callDuration' }
-          }
-        },
-        {
-          $project: {
-            _id: 0,
-            agents: 1,
-            callDurations: 1
-          }
-        }
+        { $unwind: '$agentDetails' },
+        { $group: { _id: '$agentDetails.name', totalCallDuration: { $sum: '$callDuration' } } },
+        { $project: { _id: 0, agent: '$_id', callDuration: '$totalCallDuration' } },
+        { $group: { _id: null, agents: { $push: '$agent' }, callDurations: { $push: '$callDuration' } } },
+        { $project: { _id: 0, agents: 1, callDurations: 1 } }
       ]).toArray();
 
       res.send(data);

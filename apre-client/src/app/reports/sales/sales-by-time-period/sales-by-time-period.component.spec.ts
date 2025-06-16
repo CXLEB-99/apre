@@ -1,4 +1,3 @@
-//sales-by-time-period.component.spec.ts
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SalesByTimePeriodComponent } from './sales-by-time-period.component';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
@@ -6,14 +5,19 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { TableComponent } from '../../../shared/table/table.component';
 
 describe('SalesByTimePeriodComponent', () => {
-  let component: SalesByTimePeriodComponent;
   let fixture: ComponentFixture<SalesByTimePeriodComponent>;
+  let component: SalesByTimePeriodComponent;
 
-  beforeEach(() => {
-    TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule, ReactiveFormsModule, TableComponent],
-      declarations: [SalesByTimePeriodComponent]
-    });
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [
+        HttpClientTestingModule,
+        ReactiveFormsModule,
+        TableComponent,
+        SalesByTimePeriodComponent  // <-- standalone, import here
+      ],
+      // declarations: []  <-- remove declarations
+    }).compileComponents();
 
     fixture = TestBed.createComponent(SalesByTimePeriodComponent);
     component = fixture.componentInstance;
@@ -29,6 +33,6 @@ describe('SalesByTimePeriodComponent', () => {
   });
 
   it('should validate form as invalid when fields are empty', () => {
-    expect(component.timePeriodForm.valid).toBeFalsy();
+    expect(component.timePeriodForm.valid).toBeFalse();
   });
 });

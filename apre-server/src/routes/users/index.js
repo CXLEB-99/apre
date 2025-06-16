@@ -1,39 +1,31 @@
 /**
- * Author: Professor Krasso
- * Date: 8/9/2024
- * File: index.js
- * Description: Routes for the users collection.
+ * Author: Professor Krasso, Modified by Caleb Goforth
+ * Date: 6/14/2025
+ * File: users/index.js
+ * Description: Routes for the users collection with filtering support.
  */
 
 'use strict';
 
-// Require statements
 const express = require('express');
 const { mongo } = require('../../utils/mongo');
 const { ObjectId } = require('mongodb');
 const bcrypt = require('bcryptjs');
 
-const router = express.Router(); // Create a new router object
-const saltRounds = 10; // Number of salt rounds for the bcrypt hashing algorithm
+const router = express.Router();
+const saltRounds = 10;
 
-/**
- * @description
- * GET /users
- *
- * Retrieves a list of all users from the database.
- *
- * Example:
- *
- * // Fetch all users
- * fetch('/users')
- *   .then(response => response.json())
- *   .then(data => console.log(data));
- */
+// GET /users (with optional role filter)
 router.get('/', async (req, res, next) => {
   try {
+    const { role } = req.query;
+
     mongo(async db => {
-      const users = await db.collection('users').find().toArray();
-      console.log('List of all users in the database:', users);
+      const query = role ? { role } : {};
+      const projection = role ? { username: 1, _id: 0 } : {};
+      const users = await db.collection('users').find(query).project(projection).toArray();
+
+      console.log('Filtered user list:', users);
       res.send(users);
     }, next);
   } catch (err) {
@@ -42,27 +34,13 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-/**
- * @description
- * GET /users/:id
- *
- * Retrieves a single user from the database by ID.
- *
- * Example:
- *
- * // Fetch a single user by ID
- * fetch('/users/650c1f1e1c9d440000a1b1c3')
- *  .then(response => response.json())
- *  .then(data => console.log(data));
- *
- */
+// GET /users/:id
 router.get('/:id', (req, res, next) => {
   try {
     const { id } = req.params;
 
     mongo(async db => {
       const user = await db.collection('users').findOne({ _id: new ObjectId(id) });
-      console.log('User with ID:', user);
       res.send(user);
     }, next);
   } catch (err) {
@@ -71,36 +49,10 @@ router.get('/:id', (req, res, next) => {
   }
 });
 
-/**
- * @description
- * POST /users
- *
- * Creates a new user in the database.
- *
- * Example:
- *
- * // Create a new user
- * fetch('/users', {
- *   method: 'POST',
- *   headers: {
- *     'Content-Type': 'application/json'
- *   },
- *   body: JSON.stringify({
- *     user: {
- *       username: 'jdoe',
- *       passwordHash: 'Password01',
- *       email: 'jdoe@example.com',
- *       role: 'user'
- *     }
- *   })
- * })
- *   .then(response => response.json())
- *   .then(data => console.log(data));
- */
+// POST /users
 router.post('/', (req, res, next) => {
   try {
     const { user } = req.body;
-    console.log('User from the request body:', user);
 
     user.passwordHash = bcrypt.hashSync(user.passwordHash, saltRounds);
     user.createdAt = new Date().toISOString();
@@ -108,10 +60,7 @@ router.post('/', (req, res, next) => {
 
     mongo(async db => {
       const result = await db.collection('users').insertOne(user);
-      console.log('Result of the insert:', result);
-      res.send({
-        id: result.insertedId,
-      });
+      res.send({ id: result.insertedId });
     }, next);
   } catch (err) {
     console.error(err);
@@ -119,30 +68,7 @@ router.post('/', (req, res, next) => {
   }
 });
 
-/**
- * @description
- * PUT /users/:id
- *
- * Updates an existing user in the database.
- *
- * Example:
- *
- * // Update a user
- * fetch('/users/650c1f1e1c9d440000a1b1c3', {
- *   method: 'PUT',
- *   headers: {
- *     'Content-Type': 'application/json'
- *   },
- *   body: JSON.stringify({
- *     username: 'jdoe',
- *     role: 'admin',
- *     email: 'jdoe@example.com',
- *     password: 'NewPassword123'
- *   })
- * })
- *   .then(response => response.json())
- *   .then(data => console.log(data));
- */
+// PUT /users/:id
 router.put('/:id', (req, res, next) => {
   try {
     const { id } = req.params;
@@ -157,14 +83,11 @@ router.put('/:id', (req, res, next) => {
     updateFields.updatedAt = new Date().toISOString();
 
     mongo(async db => {
-      const result = await db.collection('users').updateOne(
+      await db.collection('users').updateOne(
         { _id: new ObjectId(id) },
-        { $set: updateFields },
+        { $set: updateFields }
       );
-      console.log('Result of the update:', result);
-      res.send({
-        id: id,
-      });
+      res.send({ id });
     }, next);
   } catch (err) {
     console.error(err);
@@ -172,31 +95,14 @@ router.put('/:id', (req, res, next) => {
   }
 });
 
-/**
- * @description
- *
- * DELETE /users/:id
- *
- * Deletes a user from the database by ID.
- *
- * Example:
- *
- * // Delete a user by ID
- * fetch('/users/650c1f1e1c9d440000a1b1c3', {
- *  method: 'DELETE'
- * })
- *  .then(response => response.json())
- * .then(data => console.log(data));
- */
+// DELETE /users/:id
 router.delete('/:id', (req, res, next) => {
   try {
     const { id } = req.params;
+
     mongo(async db => {
-      const result = await db.collection('users').deleteOne({ _id: new ObjectId(id) });
-      console.log('Result of the delete:', result);
-      res.send({
-        id: id,
-      });
+      await db.collection('users').deleteOne({ _id: new ObjectId(id) });
+      res.send({ id });
     }, next);
   } catch (err) {
     console.error(err);

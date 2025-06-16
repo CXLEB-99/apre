@@ -55,17 +55,20 @@ export class SalesByTimePeriodComponent {
   });
 
   get reportTitle(): string {
-    const startDate = this.timePeriodForm.controls['startDate'].value;
-    const endDate = this.timePeriodForm.controls['endDate'].value;
-
-    return startDate && endDate
-      ? `Sales from ${startDate} to ${endDate}`
+    const start = this.timePeriodForm.controls['startDate'].value;
+    const end   = this.timePeriodForm.controls['endDate'].value;
+    return start && end
+      ? `Sales from ${this.datePipe.transform(start, 'MM/dd/yyyy')} to ${this.datePipe.transform(end, 'MM/dd/yyyy')}`
       : 'Sales by Time Period';
   }
 
-  constructor(private fb: FormBuilder, private http: HttpClient, private datePipe: DatePipe) {}
+  constructor(
+    private fb: FormBuilder,
+    private http: HttpClient,
+    private datePipe: DatePipe
+  ) {}
 
-  onSubmit() {
+  onSubmit(): void {
     if (this.timePeriodForm.invalid) {
       alert('Please select both a start and end date.');
       return;
@@ -74,18 +77,23 @@ export class SalesByTimePeriodComponent {
     const { startDate, endDate } = this.timePeriodForm.value;
     const timestamp = Date.now();
   
-    this.http.get<any[]>(`${environment.apiBaseUrl}/reports/sales/time-period?startDate=${startDate}&endDate=${endDate}&_=${timestamp}`)
+    this.http
+      .get<any[]>(
+        `${environment.apiBaseUrl}/reports/sales/time-period` +
+        `?startDate=${startDate}&endDate=${endDate}&_=${timestamp}`
+      )
       .subscribe({
         next: (data) => {
+          // Format each entry's date before binding to the table
           this.salesData = data.map(entry => ({
             ...entry,
             date: this.datePipe.transform(entry.date, 'MM/dd/yyyy')
           }));
         },
         error: (err) => {
-          console.error('Error fetching sales data: ', err);
+          console.error('Error fetching sales data:', err);
           alert('There was a problem retrieving the sales report.');
         }
       });
-  }  
+  }
 }

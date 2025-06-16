@@ -1,66 +1,103 @@
-import { Component } from '@angular/core';
+// src/app/reports/agent-performance/by-supervisor/agent-performance-by-supervisor.component.ts
+import { Component, OnInit, inject } from '@angular/core';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
-import { TableComponent } from '../../../shared/table/table.component';
+import { CommonModule } from '@angular/common';
 import { environment } from '../../../../environments/environment';
+import { TableComponent } from '../../../shared/table/table.component';
 
 @Component({
   selector: 'app-agent-performance-by-supervisor',
   standalone: true,
-  imports: [ReactiveFormsModule, TableComponent],
+  imports: [CommonModule, ReactiveFormsModule, TableComponent],
   template: `
     <h1>Agent Performance by Supervisor</h1>
-    <form class="form" [formGroup]="form" (ngSubmit)="onSubmit()">
-      <div class="form__group">
-        <label for="supervisor">Select Supervisor:</label>
-        <select class="select" formControlName="supervisor" id="supervisor">
-          <option value="" disabled>Select a supervisor</option>
-          <option *ngFor="let sup of supervisors" [value]="sup">{{ sup }}</option>
-        </select>
-      </div>
-      <div class="form__actions">
-        <input type="submit" class="button button--primary" value="Generate Report" />
-      </div>
+    <form [formGroup]="form" (ngSubmit)="fetchAgentPerformance()">
+      <label for="supervisor">Select Supervisor:</label>
+      <select id="supervisor" formControlName="supervisor" class="input">
+        <option value="" disabled>Select a supervisor</option>
+        <option *ngFor="let s of supervisors" [value]="s">{{ s }}</option>
+      </select>
+      <button type="submit" class="button button--primary" [disabled]="form.invalid">
+        Fetch Data
+      </button>
     </form>
 
-    @if (agentData.length > 0) {
-      <div class="card chart-card">
-        <app-table
-          [title]="'Performance Report for ' + selectedSupervisor"
-          [data]="agentData"
-          [headers]="['agent', 'callDuration']">
-        </app-table>
-      </div>
-    }
+    <app-table
+      *ngIf="tableData.length > 0"
+      [title]="'Agent Performance Results'"
+      [headers]="tableHeaders"
+      [data]="tableData"
+      [sortableColumns]="tableHeaders"
+      [recordsPerPage]="10"
+      [headerBackground]="'primary'">
+    </app-table>
+
+    <div *ngIf="submitted && tableData.length === 0">
+      <p>No results found for supervisor "{{ form.value.supervisor }}".</p>
+    </div>
   `,
-  styles: ``
+  styles: [`
+    form { margin-bottom: 1rem; }
+    .input { margin-right: 1rem; }
+  `]
 })
-export class AgentPerformanceBySupervisorComponent {
-  form = this.fb.group({
-    supervisor: ['', Validators.required] // changed from `null` to empty string
-  });
+export class AgentPerformanceBySupervisorComponent implements OnInit {
+  private fb = inject(FormBuilder);
+  private http = inject(HttpClient);
 
-  supervisors: string[] = ['Smith', 'Johnson', 'Lee', 'Patel'];
-  agentData: any[] = [];
+  form!: FormGroup;
+  supervisors: string[] = [];
+  submitted = false;
+  tableHeaders = ['Agent', 'Total Duration', 'Average Duration', 'Call Count'];
+  // Average Duration may now be number or null
+  tableData: Array<Record<string, string | number | null>> = [];
 
-  constructor(private fb: FormBuilder, private http: HttpClient) {}
+  ngOnInit(): void {
+    this.form = this.fb.group({
+      supervisor: [null, Validators.required]
+    });
 
-  get selectedSupervisor(): string {
-    return this.form.controls['supervisor'].value as string;
+    this.http
+      .get<string[]>(
+        `${environment.apiBaseUrl}/reports/agent-performance/by-supervisor/available-supervisors`
+      )
+      .subscribe({
+        next: list => this.supervisors = list,
+        error: err => console.error('Error loading supervisors:', err)
+      });
   }
 
-  onSubmit(): void {
-    const supervisor = this.selectedSupervisor;
-
-    if (!supervisor) {
-      alert('Please select a supervisor.');
+  fetchAgentPerformance(): void {
+    this.submitted = true;
+    if (this.form.invalid) {
+      this.tableData = [];
       return;
     }
 
-    this.http.get(`${environment.apiBaseUrl}/reports/agent-performance/by-supervisor?supervisor=${supervisor}`)
+    const sup = encodeURIComponent(this.form.value.supervisor as string);
+    this.http
+      .get<any[]>(
+        `${environment.apiBaseUrl}/reports/agent-performance/by-supervisor?supervisor=${sup}`
+      )
       .subscribe({
-        next: (data: any) => this.agentData = data,
-        error: (err: any) => console.error('Error fetching agent performance data: ', err)
+        next: data => {
+          this.tableData = data.map(r => {
+            const avg = r.averageDuration;
+            return {
+              Agent:                 r.agent,
+              'Total Duration':      r.totalDuration,
+              'Average Duration':    typeof avg === 'number'
+                                      ? Number(avg.toFixed(2))
+                                      : null,
+              'Call Count':          r.callCount
+            };
+          });
+        },
+        error: err => {
+          console.error('Error fetching performance:', err);
+          this.tableData = [];
+        }
       });
   }
 }
