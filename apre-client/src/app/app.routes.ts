@@ -75,7 +75,7 @@ export const agentPerformanceRoutes: Routes = [
     component: CallDurationByDateRangeComponent
   },
   {
-    path: 'by-supervisor',
+    path: 'by-supervisor',                           // by-supervisor route
     component: AgentPerformanceBySupervisorComponent
   }
 ];

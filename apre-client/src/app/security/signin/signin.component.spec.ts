@@ -1,3 +1,4 @@
+// signin.component.spec.ts
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { SigninComponent } from './signin.component';
@@ -48,4 +49,11 @@ describe('SigninComponent', () => {
     expect(component.signinForm.valid).toBeFalse();
     expect(component.errorMessage).toBe('Please fill in all fields.');
   });
+
+  it('should have a placeholder on the password input', () => {
+    const compiled = fixture.nativeElement;
+    const passwordInput = compiled.querySelector('#password');
+    expect(passwordInput.placeholder).toBe('Enter your password');
+  });
+  
 });

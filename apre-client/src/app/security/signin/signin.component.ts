@@ -1,3 +1,4 @@
+// signin.component.ts
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component } from '@angular/core';
@@ -25,7 +26,7 @@ import { CookieService } from 'ngx-cookie-service';
         </div>
         <div class="signin__form-group">
           <label for="password" class="signin__label">Password</label>
-          <input id="password" formControlName="password" type="password" class="signin__input" />
+          <input id="password" formControlName="password" type="password" class="signin__input" placeholder="Enter your password" />
         </div>
         <input type="submit" class="signin__button" Value="Submit" />
       </form>
