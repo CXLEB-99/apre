@@ -318,9 +318,11 @@ export class MainLayoutComponent {
   
 
   customerFeedbackReports = [
-    { name: 'Channel Rating by Month', url: '/reports/customer-feedback/channel-rating-by-month' }
+    { name: 'Channel Rating by Month', url: '/reports/customer-feedback/channel-rating-by-month' },
+    { name: 'Customer Feedback by Channel', url: '/reports/customer-feedback/by-channel' }
     // Add more reports as needed
   ];
+  
 
   constructor(private cookieService: CookieService, private router: Router) {
     this.sessionUser = JSON.parse(this.cookieService.get('sessionUser'));
